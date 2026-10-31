@@ -1,0 +1,195 @@
+[
+ {
+  "mailbox": "One@pearlenergy.com.au",
+  "hours_ago": 3,
+  "subject": "Tax Invoice 778899 Bidfood",
+  "sender": "Bidfood <accounts@bidfood.example>",
+  "to": "One Pearl Energy",
+  "attachments": [
+   {
+    "file": "invoice_bidfood.pdf"
+   }
+  ],
+  "expect": "downloaded -> ONE PEARL ENERGY folder, read + tick"
+ },
+ {
+  "mailbox": "One@pearlenergy.com.au",
+  "hours_ago": 4,
+  "subject": "Credit Note CN-9001",
+  "attachments": [
+   {
+    "file": "credit_note.pdf"
+   }
+  ],
+  "expect": "credit note: amounts stored NEGATIVE, file ends _CN"
+ },
+ {
+  "mailbox": "One@pearlenergy.com.au",
+  "hours_ago": 5,
+  "subject": "POD D-77120",
+  "attachments": [
+   {
+    "file": "pod.pdf"
+   }
+  ],
+  "expect": "proof of delivery: file ends _POD, no amounts"
+ },
+ {
+  "mailbox": "One@pearlenergy.com.au",
+  "hours_ago": 6,
+  "subject": "Statement for September",
+  "attachments": [
+   {
+    "file": "statement.pdf"
+   }
+  ],
+  "expect": "statement: kept in the _Statements holding folder"
+ },
+ {
+  "mailbox": "One@pearlenergy.com.au",
+  "hours_ago": 7,
+  "subject": "Account Summary for 0001458043 as of 02/10/2026",
+  "attachments": [
+   {
+    "file": "account_summary.pdf"
+   }
+  ],
+  "expect": "parked in _Unrecognised\\Account Summary"
+ },
+ {
+  "mailbox": "One@pearlenergy.com.au",
+  "hours_ago": 8,
+  "subject": "Overdue invoice reminder",
+  "attachments": [
+   {
+    "file": "invoice_other.pdf"
+   }
+  ],
+  "expect": "blocked word: NOT downloaded, red flag, stays unread"
+ },
+ {
+  "mailbox": "One@pearlenergy.com.au",
+  "hours_ago": 9,
+  "subject": "07254094 - PEARL ENERGY NO 1 PTY LTD **Stop Supply Warning**",
+  "attachments": [],
+  "expect": "blocked word, no attachment: red flag, stays unread"
+ },
+ {
+  "mailbox": "One@pearlenergy.com.au",
+  "hours_ago": 10,
+  "subject": "FW: Invoice NS-4040",
+  "attachments": [
+   {
+    "file": "invoice_company_named.pdf"
+   }
+  ],
+  "expect": "forwarded: red flag; the document names RADHE KRISHNA, so it is filed in RADHE KRISHNA INVESTMENT"
+ },
+ {
+  "mailbox": "One@pearlenergy.com.au",
+  "hours_ago": 11,
+  "subject": "Meeting tomorrow at 10",
+  "attachments": [],
+  "expect": "not a document e-mail: left completely untouched"
+ },
+ {
+  "mailbox": "One@pearlenergy.com.au",
+  "hours_ago": 12,
+  "subject": "Invoice - photo attached",
+  "attachments": [
+   {
+    "file": "photo_of_invoice.jpg"
+   }
+  ],
+  "expect": "image only: orange 'Image attachment' category, unread, nothing downloaded"
+ },
+ {
+  "mailbox": "One@pearlenergy.com.au",
+  "hours_ago": 13,
+  "subject": "inv",
+  "attachments": [
+   {
+    "file": "corrupt.pdf"
+   }
+  ],
+  "expect": "unreadable file: goes to _Unrecognised"
+ },
+ {
+  "mailbox": "One@pearlenergy.com.au",
+  "hours_ago": 14,
+  "subject": "Invoice SC-7001 (scanned)",
+  "attachments": [
+   {
+    "file": "scanned_invoice.pdf"
+   }
+  ],
+  "expect": "scanned PDF: read by OCR if Tesseract is installed, else _Unrecognised"
+ },
+ {
+  "mailbox": "One@pearlenergy.com.au",
+  "hours_ago": 15,
+  "subject": "Invoice XL-5001",
+  "attachments": [
+   {
+    "file": "invoice_excel.xlsx"
+   }
+  ],
+  "expect": "Excel invoice is read like a PDF"
+ },
+ {
+  "mailbox": "One@pearlenergy.com.au",
+  "hours_ago": 16,
+  "subject": "From Rarity Wholesale",
+  "sender": "Accounts <accounts@raritywholesale.com.au>",
+  "attachments": [
+   {
+    "file": "statement_rarity.pdf"
+   }
+  ],
+  "expect": "exception sender: downloaded although the subject has no keyword"
+ },
+ {
+  "mailbox": "One@pearlenergy.com.au",
+  "hours_ago": 17,
+  "subject": "Invoice RW-2020",
+  "attachments": [
+   {
+    "file": "invoice_logo_only.pdf"
+   }
+  ],
+  "expect": "supplier name only in the logo: found by OCR (needs Tesseract)"
+ },
+ {
+  "mailbox": "One@pearlenergy.com.au",
+  "hours_ago": 18,
+  "subject": "Invoice 100 - totals do not add up",
+  "attachments": [
+   {
+    "file": "invoice_bad_math.pdf"
+   }
+  ],
+  "expect": "100 + 10 is not 150: refused, goes to _Unrecognised with the reason"
+ },
+ {
+  "mailbox": "pearl.colyton@pearlenergy.com.au",
+  "hours_ago": 2,
+  "subject": "FW: Invoice INV-1001",
+  "attachments": [
+   {
+    "file": "invoice_acme.pdf"
+   }
+  ],
+  "expect": "filed in COLYTON FUELS (mailbox/company), red flag (FW)"
+ },
+ {
+  "mailbox": "pearl.colyton@pearlenergy.com.au",
+  "hours_ago": 1,
+  "subject": "Invoice INV-1001 again",
+  "attachments": [
+   {
+    "file": "invoice_acme.pdf"
+   }
+  ],
+  "expect": "the same invoice again: recognised as a duplicate, not saved twice"
+ }
+]

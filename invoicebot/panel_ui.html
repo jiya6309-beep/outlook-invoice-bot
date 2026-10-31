@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outlook Invoice Bot</title>
+<style>
+  :root { --navy:#1f3864; --blue:#2f5597; --light:#ddebf7; --green:#2e7d32; --red:#c62828; --amber:#b26a00; --bg:#f3f6fb; --text:#1b2433; --muted:#64748b; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: "Segoe UI", Calibri, Arial, sans-serif; background:var(--bg); color:var(--text); font-size:15px; }
+  header { background:var(--navy); color:#fff; display:flex; align-items:center; gap:16px; padding:14px 28px; position:sticky; top:0; z-index:5; box-shadow:0 2px 8px rgba(0,0,0,.25); }
+  .brand { font-size:21px; font-weight:600; flex:1; } .ver { font-size:12px; opacity:.7; margin-left:6px; font-weight:400; }
+  .badge { padding:6px 14px; border-radius:20px; font-weight:700; font-size:13px; letter-spacing:.5px; }
+  .badge.test { background:#c8e6c9; color:#1b5e20; } .badge.live { background:#ffcdd2; color:#b71c1c; } .badge.none { background:#eee; color:#555; }
+  button.link { background:none; border:0; color:#cfe0ff; cursor:pointer; font-size:13px; text-decoration:underline; }
+  main { max-width:1100px; margin:22px auto; padding:0 18px 60px; display:grid; gap:18px; }
+  .card { background:#fff; border-radius:12px; padding:20px 24px; box-shadow:0 1px 4px rgba(20,40,80,.12); }
+  .card h2 { margin:0 0 4px; font-size:18px; color:var(--navy); } .sub { color:var(--muted); margin:0 0 14px; font-size:13.5px; }
+  .alert { max-width:1100px; margin:16px auto 0; padding:12px 18px; border-radius:10px; background:#ffebee; color:#b71c1c; border:1px solid #ef9a9a; font-weight:600; }
+  .alert.ok { background:#e8f5e9; color:#1b5e20; border-color:#a5d6a7; } .alert.info { background:#e3f2fd; color:#0d47a1; border-color:#90caf9; }
+  .big-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+  button.big { border:0; border-radius:12px; padding:20px 14px; cursor:pointer; color:#fff; font-size:18px; font-weight:600; background:var(--blue); line-height:1.25; transition:transform .06s, filter .15s; }
+  button.big small { display:block; font-size:12.5px; font-weight:400; opacity:.9; margin-top:6px; }
+  button.big:hover:not(:disabled) { filter:brightness(1.1); } button.big:active:not(:disabled) { transform:scale(.98); }
+  button.big.green { background:#2e7d32; } button.big.blue { background:#1565c0; } button.big.grey { background:#546e7a; }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  button.btn { border:1px solid #b6c4da; background:#fff; border-radius:8px; padding:8px 14px; cursor:pointer; font-size:14px; color:var(--navy); }
+  button.btn:hover:not(:disabled) { background:var(--light); } button.btn.primary { background:var(--blue); color:#fff; border-color:var(--blue); }
+  button.btn.danger { background:var(--red); color:#fff; border-color:var(--red); }
+  input[type=text], input[type=date], input[type=number], select { padding:8px 10px; border:1px solid #b6c4da; border-radius:8px; font-size:14px; font-family:inherit; }
+  input[type=text] { width:100%; max-width:560px; } .row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:12px; }
+  .hint { font-size:13px; color:var(--muted); margin-top:10px; } a { color:var(--blue); cursor:pointer; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin:14px 0; }
+  .stat { border-radius:10px; padding:12px; text-align:center; background:var(--light); } .stat b { display:block; font-size:26px; color:var(--navy); } .stat span { font-size:12px; color:#455a74; }
+  button.stat { border:0; font:inherit; cursor:pointer; } button.stat:hover { outline:2px solid var(--navy); } .stat small { display:block; font-size:11px; color:#455a74; margin-top:2px; }
+  .stat.green { background:#c8e6c9; } .stat.amber { background:#ffe9b3; } .stat.red { background:#ffcdd2; } .stat.grey { background:#eceff1; }
+  pre#log { background:#0f1b2d; color:#cfe3ff; border-radius:10px; padding:14px; height:260px; overflow:auto; font-size:12.5px; line-height:1.45; margin:10px 0 0; white-space:pre-wrap; }
+  .state { display:flex; align-items:center; gap:10px; font-weight:600; } .dot { width:12px; height:12px; border-radius:50%; background:#9e9e9e; }
+  .dot.run { background:#fb8c00; animation:pulse 1s infinite; } .dot.ok { background:#43a047; } .dot.bad { background:#e53935; }
+  @keyframes pulse { 50% { opacity:.25; } }
+  .open-grid { display:flex; flex-wrap:wrap; gap:10px; }
+  table { border-collapse:collapse; width:100%; margin-top:10px; } th, td { text-align:left; padding:8px 10px; border-bottom:1px solid #e3e9f3; font-size:14px; } th { color:var(--navy); background:#f1f5fb; }
+  .step { display:flex; gap:14px; margin-top:20px; } .num { width:30px; height:30px; border-radius:50%; background:var(--navy); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; flex:none; }
+  .step > div:not(.num) { flex:1; min-width:0; } .step h3 { margin:3px 0 2px; font-size:16px; color:var(--navy); } code { background:#eef2f9; padding:1px 6px; border-radius:5px; }
+  main { grid-template-columns:minmax(0,1fr); } main > * { min-width:0; } .banner-test, .banner-live, .hint, .sub, #destNow { overflow-wrap:anywhere; } input[type=text], select { max-width:100%; }
+  [hidden] { display:none !important; }
+  pre#log.idle { height:70px; }
+  .pill { font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; background:var(--light); color:var(--blue); padding:3px 9px; border-radius:20px; vertical-align:middle; margin-left:8px; }
+  details.more { margin-top:14px; border-top:1px solid #e3e9f3; padding-top:10px; } details.more summary, #setup > summary { cursor:pointer; color:var(--blue); font-size:14px; font-weight:600; }
+  #setup > summary { list-style:none; display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 14px; } #setup > summary::-webkit-details-marker { display:none; }
+  #setup > summary h2 { margin:0; } #setup > summary::after { content:"▾ open"; margin-left:auto; color:var(--blue); font-size:13px; } #setup[open] > summary::after { content:"▴ close"; }
+  #setup > summary .sub { margin:0; }
+  .alert { position:sticky; top:62px; z-index:4; box-shadow:0 2px 8px rgba(0,0,0,.12); }
+  button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible, a:focus-visible { outline:3px solid #90caf9; outline-offset:2px; }
+  button.big:hover:not(:disabled) { box-shadow:0 4px 12px rgba(20,40,80,.25); }
+  .badge.live { animation:pulse 2s infinite; } .banner-test { background:#e8f5e9; color:#1b5e20; border-radius:8px; padding:8px 12px; font-size:13px; margin:0 0 14px; } .banner-live { background:#fff3e0; color:#8a4b00; border-radius:8px; padding:8px 12px; font-size:13px; margin:0 0 14px; }
+  .stat b { font-variant-numeric:tabular-nums; }
+  @media (max-width:640px) { header { flex-wrap:wrap; padding:12px 16px; } main { padding:0 12px 40px; } .card { padding:16px; } .step { gap:10px; } }
+  .big.purple { background:#6a1b9a; } .big.lilac { background:#8e5bb5; } .big.plum { background:#4a2a6b; }
+  .big-grid.three { grid-template-columns:repeat(3, 1fr); }
+  @media (max-width: 760px) { .big-grid.three { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">📨 Outlook Invoice Bot <span class="ver">v__VERSION__</span></div>
+  <div id="modeBadge" class="badge none">…</div>
+  <button class="link" id="bQuit">Close panel</button>
+</header>
+<div id="alert" class="alert" hidden></div>
+
+<main>
+  <div id="offBanner" class="card" hidden style="background:#fff4d6;border:2px solid #d9822b;display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+    <b style="color:#8a4b00">⚠ <span id="offText"></span></b>
+    <button class="btn" id="bAllOn">Switch them all on again</button>
+  </div>
+  <section class="card" id="setupCard">
+   <details id="setup">
+    <summary><h2>Setup</h2><span class="sub">Do these once. Click to open or close.</span></summary>
+
+    <div class="step"><div class="num">1</div><div>
+      <h3>Where should the documents go?</h3>
+      <div id="destNow" class="hint" style="margin-top:0"></div>
+      <div class="row"><input type="text" id="destRoot" placeholder="Leave EMPTY: the bot finds the synced SharePoint folder by itself. (Or type the folder here.)"></div>
+      <div class="row">Folder layout under it:
+        <select id="destLayout">
+          <option value="month_company_site">Month, company, site &nbsp;→&nbsp; &lt;folder&gt;\OCTOBER 2026 EMAIL INVOICES\COMPANY\SITE</option>
+          <option value="month_company">Month, then company &nbsp;→&nbsp; &lt;folder&gt;\OCTOBER 2026 EMAIL INVOICES\COMPANY</option>
+          <option value="site">Site folders &nbsp;&nbsp;→&nbsp; &lt;folder&gt;\SITE</option>
+          <option value="company_site">Company, then site &nbsp;→&nbsp; &lt;folder&gt;\COMPANY\SITE</option>
+          <option value="site_month">Site, then month &nbsp;→&nbsp; &lt;folder&gt;\SITE\OCTOBER 2026</option>
+        </select></div>
+      <div class="row"><button class="btn primary" id="bMatch">🔗 Match my sites to the SharePoint folders</button>
+        <span class="hint" style="margin:0">After switching to LIVE: it reads the real folder names (each site's folder) and reports any that do not match.</span></div>
+      <div class="row"><button class="btn danger" id="bLive">Switch to LIVE</button><button class="btn" id="bTest">Back to TEST</button>
+        <span id="destMsg" class="hint" style="margin:0"></span></div>
+      <div class="hint">TEST writes into a <code>TestOutput</code> folder next to the program. LIVE writes into the folder above, as
+        the layout chosen above (for example <code>&lt;folder&gt;\OCTOBER 2026 EMAIL INVOICES\COMPANY\SITE\</code>), with <code>HOLDINGS</code> and <code>Reports</code>
+        inside the same folder; missing folders are made, existing ones are used. In TEST nothing at all goes to
+        SharePoint: Holding, Reports, fuel invoices, Fleet Card and security files all stay in folders next to the program.</div>
+    </div></div>
+
+    <div class="step"><div class="num">2</div><div>
+      <h3>Connect the Outlook mailboxes</h3>
+      <div class="hint" style="margin-top:0">Classic Outlook must be open. The bot finds the mailboxes and matches them to your companies.</div>
+      <div class="row"><button class="btn primary" id="bDetect">🔍 Find my Outlook mailboxes</button><span id="detectMsg" class="hint" style="margin:0"></span></div>
+      <div id="mbTable"></div>
+      <div class="row"><button class="btn" id="bTick">🧪 Test Outlook marking on ONE e-mail</button>
+        <span class="hint" style="margin:0">First fill in the two boxes under "More options (testing and demo)" in the Invoices section (mailbox and a word from a test e-mail's subject). It tries read, tick, flag and category on that one e-mail, tells you what your Outlook allows, and puts the e-mail back.</span></div>
+    </div></div>
+
+    <div class="step"><div class="num">3</div><div>
+      <h3>Run automatically</h3>
+      <div class="row">Every <input type="number" id="schMin" value="30" min="5" max="1440" style="width:80px"> minutes
+        <button class="btn primary" id="bSchOn">Turn on</button><button class="btn" id="bSchOff">Turn off</button>
+        <span id="schMsg" class="hint" style="margin:0"></span></div>
+      <div class="hint">Works while you are signed in to Windows with Outlook open.</div>
+    </div></div>
+    <div class="step"><div class="num">4</div><div>
+      <h3>Security reports (alarm arm / disarm)</h3>
+      <div class="hint" style="margin-top:0">Reads ONLY the Security mailbox and fills the fortnightly STORE OPEN &amp; CLOSE Excel. Sites, Client Nos and
+        opening hours: <a data-open="security_settings">Security_Settings.xlsx</a>. Runs on its own - never at the same moment as the invoices.</div>
+      <div class="row">Every <select id="secDay"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option>
+        <option>Friday</option><option>Saturday</option><option>Sunday</option></select> at <input type="time" id="secTime" value="09:00" style="width:110px">
+        <button class="btn primary" id="bSecOn">Turn on</button><button class="btn" id="bSecOff">Turn off</button>
+        <span id="secSchMsg" class="hint" style="margin:0"></span></div>
+    </div></div>
+   </details>
+  </section>
+
+  <section class="card">
+    <h2>Invoices: what would you like to do?</h2>
+    <p class="sub" id="whereFiles">&nbsp;</p>
+    <div class="big-grid">
+      <button class="big green" id="bRun">▶ Run now<small>Process new e-mails and file the documents</small></button>
+      <button class="big blue" id="bShadow">🧪 Rehearsal<small>Shows what WOULD happen · changes nothing</small></button>
+      <button class="big" id="bDates">📅 Run for dates<small>Read the e-mails of a chosen period</small></button>
+      <button class="big grey" id="bCheck">✔ Check my PC<small>Is everything ready?</small></button>
+    </div>
+    <div id="datesBox" class="row" hidden>
+      From <input type="date" id="dFrom"> To <input type="date" id="dTo">
+      <label><input type="checkbox" id="dShadow" checked> Rehearsal only (change nothing)</label>
+      <button class="btn primary" id="bDatesGo">Start</button>
+      <span class="hint" style="margin:0">or</span>
+      <button class="btn" id="bReportGo">📊 Make an Excel report for these dates</button>
+      <button class="btn" id="bAcGo">📒 Make the A/C Excel for these dates</button>
+    </div>
+    <div id="autoLine" class="hint"></div>
+    <details class="more"><summary>More options (testing and demo)</summary>
+    <div class="row">
+      <span class="hint" style="margin:0">Only one mailbox? Type part of its name:</span>
+      <input type="text" id="mbFilter" placeholder="optional, e.g. jiya" style="max-width:220px">
+    </div>
+    <div class="row">
+      <span class="hint" style="margin:0">Testing in a mailbox with real e-mails? Only touch e-mails whose subject contains:</span>
+      <input type="text" id="subFilter" placeholder="e.g. BOTTEST" style="max-width:220px">
+    </div>
+    <div class="hint">First time? <a id="lDemo">Try the demo</a> (sample e-mails, nothing real is touched) ·
+      <a id="lMsg">Test with saved e-mails (.msg files)</a></div>
+    <div id="msgBox" class="row" hidden>
+      Folder with the .msg files: <input type="text" id="msgFolder" placeholder="C:\Msgs">
+      <button class="btn primary" id="bMsgGo">Start</button>
+    </div>
+    </details>
+  </section>
+
+  <section class="card">
+    <h2>Security: what would you like to do?</h2>
+    <p class="sub">Reads ONLY the Security mailbox (the weekly alarm reports). Separate from the invoices.</p>
+    <div class="big-grid three">
+      <button class="big purple" id="bSecRun">🛡 Run security now<small>Read the new reports and fill the Excel</small></button>
+      <button class="big lilac" id="bSecShadow">🧪 Security rehearsal<small>Shows what WOULD happen · changes nothing</small></button>
+      <button class="big plum" id="bSecDates">📅 Security for dates<small>Read the reports of a chosen period</small></button>
+    </div>
+    <div id="secDatesBox" class="row" hidden>
+      From <input type="date" id="sFrom"> To <input type="date" id="sTo">
+      <label><input type="checkbox" id="sShadow" checked> Rehearsal only (change nothing)</label>
+      <button class="btn primary" id="bSecDatesGo">Start</button>
+    </div>
+    <div id="secAutoLine" class="hint"></div>
+  </section>
+
+  <section class="card">
+    <h2>Needs your attention <span class="pill">today</span></h2>
+    <p class="sub" id="attnText">…</p>
+    <div class="stats" id="attnStats"></div>
+    <div class="row"><button class="btn primary" data-open="to_fix">📝 Open the To-Fix list</button>
+      <button class="btn" data-open="record">📊 This month's Record</button>
+      <button class="btn" data-open="ac">📒 Latest A/C Excel</button>
+      <span class="hint" style="margin:0" id="lastRun"></span></div>
+  </section>
+
+  <section class="card">
+    <h2>Security <span class="pill" id="secWeek">latest week</span></h2>
+    <p class="sub" id="secText">Results of the alarm arm / disarm reports from the Security mailbox.</p>
+    <div class="stats" id="secStats"></div>
+    <div class="row"><button class="btn primary" data-open="security_excel">🛡 Open the latest STORE OPEN &amp; CLOSE Excel</button>
+      <button class="btn" data-open="security_folder">📂 Security reports folder</button></div>
+  </section>
+
+  <section class="card">
+    <h2>Open</h2>
+    <p class="sub">Shortcuts to the folders and files.</p>
+    <div class="open-grid">
+      <button class="btn" data-open="destination">📁 Filed documents</button>
+      <button class="btn" data-open="holding">📂 Holding folders (statements, unassigned, unrecognised)</button>
+      <button class="btn" data-open="unassigned">⏳ Unassigned</button>
+      <button class="btn" data-open="reports">📈 Reports folder</button>
+      <button class="btn" data-open="last_log">📄 Last run log</button>
+      <button class="btn" data-open="logs">🗂 All logs</button>
+      <button class="btn" data-open="records_archive">🗄 Quarterly archives</button>
+      <button class="btn" data-open="settings">⚙ Settings (Excel)</button>
+      <button class="btn" data-open="fuel_list">⛽ Fuel invoice list (this month)</button>
+      <button class="btn" data-open="fuel_folder">⛽ Fuel invoices folder</button>
+      <button class="btn" data-open="fleet_record">💳 Fleet Card record (this month)</button>
+      <button class="btn" data-open="fleet_folder">💳 Fleet Card statements folder</button>
+      <button class="btn" data-open="security_folder">🛡 Security reports folder</button>
+      <button class="btn" data-open="security_settings">🛡 Security settings (Excel)</button>
+      <button class="btn" data-open="readme">📖 Guide</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="state"><span class="dot" id="dot"></span><span id="runTitle">Nothing is running</span>
+      <span style="flex:1"></span><button class="btn danger" id="bStop" hidden>■ Stop</button></div>
+    <div id="runHeadline" class="hint" style="font-weight:600"></div>
+    <div class="stats" id="stats"></div>
+    <pre id="log" class="idle">The activity of the run appears here.</pre>
+  </section>
+</main>
+
+<script>
+(function () {
+  const T = "__TOKEN__";
+  const $ = id => document.getElementById(id);
+  let offset = 0, polling = false, lastOverview = null, layoutTouched = false, setupSeen = false;
+
+  async function api(path, body) {
+    const opt = { headers: { "X-Token": T } };
+    if (body !== undefined) { opt.method = "POST"; opt.headers["Content-Type"] = "application/json"; opt.body = JSON.stringify(body); }
+    try { return await (await fetch(path, opt)).json(); }
+    catch (e) { return { ok: false, message: "The control panel stopped. Start it again with Start_Bot.bat." }; }
+  }
+  function say(text, kind) { const a = $("alert"); if (!text) { a.hidden = true; return; } a.textContent = text; a.className = "alert " + (kind || ""); a.hidden = false; if (a.scrollIntoView) a.scrollIntoView({ block: "nearest" }); }
+  function stat(label, n, cls, open, extra) {
+    const d = document.createElement(open ? "button" : "div"); d.className = "stat " + (cls || "") + (open ? " click" : "");
+    const b = document.createElement("b"); b.textContent = n; const s = document.createElement("span"); s.textContent = label; d.append(b, s);
+    if (extra) { const e = document.createElement("small"); e.textContent = extra; d.append(e); }
+    if (open) { d.title = "Open the folder"; d.onclick = async () => { const r = await api("/api/open", { what: open }); if (!r.ok) say(r.message, ""); else say(""); }; }
+    return d;
+  }
+
+  // ---------------------------------------------------------------- overview
+  async function refresh() {
+    const o = await api("/api/overview"); if (!o.version) return; lastOverview = o;
+    const badge = $("modeBadge");
+    if (o.mode === "live") { badge.textContent = "LIVE"; badge.className = "badge live"; }
+    else if (o.mode === "test") { badge.textContent = "TEST MODE"; badge.className = "badge test"; }
+    else { badge.textContent = "CHECK SETTINGS"; badge.className = "badge none"; }
+    if (o.settings_error) say(o.settings_error, ""); else if ($("alert").textContent.startsWith("Bot_Settings")) say("");
+    const wf = $("whereFiles"); wf.textContent = o.mode === "test" ? "TEST MODE: documents go to a test folder, not SharePoint. Documents go to:  " + o.root : (o.mode ? "Documents go to:  " + o.root : ""); wf.className = o.mode === "test" ? "banner-test" : (o.mode ? "banner-live" : "sub");
+    $("destNow").textContent = o.mode ? ("Now: " + o.mode.toUpperCase() + "  →  " + o.root + "   |   layout: " + (o.layout || "")) : "";
+    const byPattern = { "{MONTH_FOLDER}\\{COMPANY}\\{SITE}": "month_company_site", "{SITE}": "site", "{COMPANY}\\{SITE}": "company_site", "{SITE}\\{MONTH} {YEAR}": "site_month", "{MONTH_FOLDER}\\{COMPANY}": "month_company" };
+    if (o.layout && byPattern[o.layout] && !layoutTouched) $("destLayout").value = byPattern[o.layout];
+    const c = o.counts || {}, w = c.Unassigned || 0, u = c.Unrecognised || 0;
+    $("attnText").textContent = (w + u + (o.waiting_total || 0)) ? "Some documents need a person. Open the To-Fix list, type the fix in the yellow cells, save and close it. The next run moves the files." : "Nothing is waiting today. 🎉";
+    const wt = o.waiting_total || 0, ut = o.unrecognised_total || 0;
+    const st = $("attnStats"); st.replaceChildren(
+      stat("Unassigned today (site or folder not found)", w, (w || wt) ? "amber" : "grey", "unassigned", wt + " waiting in total"),
+      stat("Unrecognised today (a person must look)", u, (u || ut) ? "red" : "grey", "unrecognised", ut + " in total"),
+      stat("Filed today", c.Filed || 0, "green", "filed"), stat("Statements & other parked today", c.Parked || 0, "", "statements"),
+      stat("Documents handled today", o.today || 0, ""));
+    $("lastRun").textContent = o.last_run ? ("Last live run: " + o.last_run.started) : "No live run yet.";
+    const sch = o.schedule || {}; $("schMsg").textContent = !sch.supported ? "Windows only." : (sch.enabled ? "Automatic running is ON." : "Automatic running is off.");
+    $("autoLine").textContent = !sch.supported ? "" : (sch.enabled ? "● Automatic running is ON. It works while this PC is on and Outlook is open." : "○ Automatic running is OFF. Turn it on in Setup, step 3.");
+    if (!setupSeen) { setupSeen = true; if (o.mode !== "live") $("setup").open = true; }
+    $("bRun").disabled = $("bShadow").disabled = $("bDates").disabled = $("bCheck").disabled = !!o.running;
+    for (const id of ["bSecRun", "bSecShadow", "bSecDates", "bSecDatesGo"]) $(id).disabled = !!o.running;
+    const off = o.switched_off || [];
+    $("offBanner").hidden = !off.length;
+    $("offText").textContent = off.length ? (off.length + (off.length === 1 ? " company is" : " companies are") + " switched OFF and not read: " + off.join(", ")) : "";
+    if (o.running && !polling) { poll(); }
+    refreshSecurity();
+  }
+
+  async function refreshSecurity() {
+    const q = await api("/api/security"); if (!q || q.ok === false) return;
+    $("secWeek").textContent = q.week ? ("week " + q.week) : "no report read yet";
+    $("secText").textContent = q.error ? ("Security settings: " + q.error) :
+      (q.week ? "Results of the latest week of alarm reports. Yellow OPEN / CLOSE labels in the Excel show what to check." :
+                "No security report has been read yet. Use 'Run security now' (or the rehearsal) above.");
+    $("secStats").replaceChildren(
+      stat("Security reports received", q.reports || 0, "", "security_folder"),
+      stat("Days OK", q.ok || 0, "green"),
+      stat("Opened late (more than 10 min)", q.open_late || 0, q.open_late ? "amber" : "grey", "security_excel"),
+      stat("Closed early", q.close_early || 0, q.close_early ? "amber" : "grey", "security_excel"),
+      stat("Missing open / close", q.missing || 0, q.missing ? "red" : "grey", "security_excel"),
+      stat("No report", q.no_report || 0, q.no_report ? "red" : "grey", "security_excel"));
+    const sch = q.schedule || {};
+    $("secSchMsg").textContent = !sch.supported ? "Windows only." : (sch.enabled ? "Automatic security check is ON." : "Automatic security check is off.");
+    $("secAutoLine").textContent = !sch.supported ? "" : (sch.enabled ? "● Automatic security check is ON (Setup, step 4)." :
+      "○ Automatic security check is OFF. Turn it on in Setup, step 4.");
+  }
+
+  // ---------------------------------------------------------------- running
+  function lock(running) { $("bStop").hidden = !running; for (const id of ["bRun", "bShadow", "bDates", "bCheck", "bDatesGo", "bReportGo", "bAcGo", "bMsgGo", "bMatch", "bTick", "lDemo", "bSecRun", "bSecShadow", "bSecDates", "bSecDatesGo"]) { const e = $(id); if (e.tagName === "BUTTON") e.disabled = running; } }
+  async function start(kind, extra) {
+    const body = Object.assign({ kind, mailbox: $("mbFilter").value.trim(), subject: $("subFilter").value.trim() }, extra || {});
+    const r = await api("/api/run", body);
+    if (!r.ok) { say(r.message, ""); return; }
+    say(""); offset = 0; $("log").className = ""; $("log").textContent = ""; $("stats").replaceChildren(); $("runHeadline").textContent = "";
+    $("runTitle").textContent = "Running…"; $("dot").className = "dot run"; lock(true); poll();
+  }
+  async function poll() {
+    polling = true;
+    while (true) {
+      const s = await api("/api/status?since=" + offset);
+      if (s.lines === undefined) { polling = false; return; }
+      if (s.lines.length) { const log = $("log"); const atEnd = log.scrollTop + log.clientHeight >= log.scrollHeight - 30; log.textContent += s.lines.join("\n") + "\n"; if (atEnd) log.scrollTop = log.scrollHeight; offset = s.next; }
+      if (!s.running) { finish(s); break; }
+      await new Promise(r => setTimeout(r, 900));
+    }
+    polling = false;
+  }
+  function finish(s) {
+    lock(false);
+    const j = s.job || {}, n = s.summary || {}, kind = { live: "Run", shadow: "Rehearsal", dates: "Run for dates", check: "PC check", demo: "Demo", msg: ".msg test", report: "Report", match: "Site matching", outlooktest: "Outlook marking test" }[j.kind] || "Run";
+    const ok = j.exit_code === 0 && !j.stopped;
+    $("dot").className = "dot " + (ok ? "ok" : "bad");
+    $("runTitle").textContent = j.stopped ? kind + " stopped" : (ok ? kind + " finished" : kind + " finished with a problem");
+    $("runHeadline").textContent = s.headline || "";
+    const st = $("stats"); st.replaceChildren();
+    if (n.documents !== undefined || n.scanned !== undefined) {
+      const skipped = (n.already_ticked || 0) + (n.already_handled || 0);
+      st.append(stat("E-mails looked at", n.scanned || 0, ""), stat("Skipped: already done", skipped, "grey"), stat("E-mails with documents read", n.downloaded || 0, ""), stat("Filed", n.filed || 0, "green"), stat("Parked", n.parked || 0, ""),
+        stat("Waiting", n.unassigned || 0, n.unassigned ? "amber" : "grey"), stat("Unrecognised", n.unrecognised || 0, n.unrecognised ? "red" : "grey"),
+        stat("Red-flagged e-mails", n.blocked || 0, n.blocked ? "red" : "grey"), stat("Duplicates", n.duplicates || 0, "grey"));
+    }
+    refresh();
+  }
+
+  function needMailboxNote() { return "Classic Outlook must be open and signed in."; }
+  const confirmRun = () => confirm("Run now?\n\nThe bot will read your Outlook mailboxes, file the documents to:\n" + ((lastOverview && lastOverview.root) || "?") +
+    "\n\nand mark the e-mails (read ✓, red flags, categories).\n\nTip: use 'Rehearsal' first if you are not sure.") ;
+  $("bRun").onclick = () => { if (confirmRun()) start("live"); };
+  $("bShadow").onclick = () => start("shadow");
+  $("bCheck").onclick = () => start("check");
+  $("bDates").onclick = () => { $("datesBox").hidden = !$("datesBox").hidden; };
+  $("bDatesGo").onclick = () => { const shadow = $("dShadow").checked; if (shadow || confirmRun()) start("dates", { from: $("dFrom").value, to: $("dTo").value, shadow }); };
+  $("bReportGo").onclick = () => start("report", { from: $("dFrom").value, to: $("dTo").value });
+  $("bAcGo").onclick = () => start("ac", { from: $("dFrom").value, to: $("dTo").value });
+  $("lDemo").onclick = () => start("demo");
+  $("lMsg").onclick = () => { $("msgBox").hidden = !$("msgBox").hidden; };
+  $("bMsgGo").onclick = () => start("msg", { folder: $("msgFolder").value });
+  $("bStop").onclick = async () => { if (confirm("Stop the run now? Nothing is lost - the next run continues from where this one reached.")) { const r = await api("/api/stop", {}); say(r.message, r.ok ? "info" : ""); } };
+  $("bQuit").onclick = async () => { if (confirm("Close the control panel?\n(An automatic schedule keeps running.)")) { await api("/api/quit", {}); document.body.textContent = "Control panel closed. You can close this tab."; } };
+  document.querySelectorAll("[data-open]").forEach(b => b.onclick = async () => { const r = await api("/api/open", { what: b.dataset.open }); if (!r.ok) say(r.message, ""); else say(""); });
+
+  // ---------------------------------------------------------------- setup: mailboxes
+  $("bDetect").onclick = async () => {
+    $("detectMsg").textContent = "Looking… (a few seconds)"; $("mbTable").replaceChildren();
+    const r = await api("/api/mailboxes");
+    if (!r.ok) { $("detectMsg").textContent = ""; say(r.message, ""); return; }
+    say(""); $("detectMsg").textContent = r.suggestions.length + " mailbox(es) found in Outlook." + ((r.missing || []).length ? "  NOT signed in on this PC (the bot will skip them here): " + r.missing.join(", ") + "." : "");
+    const t = document.createElement("table"), head = t.createTHead().insertRow();
+    for (const h of ["Mailbox in Outlook", "What it is", "Active", ""]) { const th = document.createElement("th"); th.textContent = h; head.append(th); }
+    const inactive = new Set(r.inactive || []);
+    const body = t.createTBody(); const rows = [];
+    const SPECIAL = { "fuel invoices": "⛽ Fuel invoices", "fleet card": "💳 Fleet Card statements", "security": "🛡 Security reports" };
+    const NOTE = { "fuel invoices": "reads the Inbox + its sub-folders", "fleet card": "", "security": "security run only" };
+    const READ_ALL = "special:read all";
+    const FOLDER = { "fuel invoices": "fuel_folder", "fleet card": "fleet_folder", "security": "security_folder" };
+    const paint = (sel) => { const sp = sel.value.startsWith("special:") && sel.value !== "special:never" && sel.value !== READ_ALL;
+      sel.style.background = sp ? "#efe7f7" : ""; sel.style.borderColor = sp ? "#8e5bb5" : ""; sel.style.fontWeight = sp ? "600" : "";
+      sel.style.color = sel.value === "special:never" ? "#8a8a8a" : ""; };
+    for (const s of r.suggestions) {
+      const tr = body.insertRow(); tr.insertCell().textContent = s.outlook;
+      const sel = document.createElement("select"); sel.style.maxWidth = "360px";
+      const group = (label, items) => { const g = document.createElement("optgroup"); g.label = label;
+        for (const [v, text] of items) { const o = document.createElement("option"); o.value = v; o.textContent = text; g.append(o); } sel.append(g); };
+      group("Company mailbox", r.companies.map(c => ["company:" + c, c]));
+      group("Special mailbox", Object.entries(SPECIAL).map(([k, v]) => ["special:" + k, v]));
+      group("Other", [[READ_ALL, "📥 Read every e-mail (company from the invoice)"], ["test", "🧪 TEST mailbox (personal / training account)"],
+                      ["special:never", "🚫 Never read"]]);
+      if (s.special) sel.value = "special:" + (s.special === "on hold" ? "never" : s.special);
+      else if (s.company) sel.value = "company:" + s.company;
+      else sel.value = "special:never";                                   // nothing fits: never read (nothing is left blank)
+      paint(sel);
+      tr.insertCell().append(sel);
+      const actCell = tr.insertCell(); const act = document.createElement("input"); act.type = "checkbox";
+      act.checked = !(s.company && inactive.has(s.company)); act.title = "Untick: this company is NOT read by any run until you tick it again";
+      actCell.append(act);
+      const note = tr.insertCell();
+      const label = () => {
+        note.replaceChildren(); note.style.color = "";
+        const v = sel.value;
+        if (v === READ_ALL) note.textContent = "reads every e-mail (Inbox + sub-folders); company and site come from each invoice";
+        else if (v.startsWith("special:") && v !== "special:never") {
+          const k = v.slice(8); note.append((s.special === k ? "✓ connected" : "will be connected") + (NOTE[k] ? " · " + NOTE[k] + " " : " "));
+          const a = document.createElement("a"); a.href = "#"; a.textContent = "📂 folder"; a.onclick = async (e) => { e.preventDefault(); const q = await api("/api/open", { what: FOLDER[k] }); if (!q.ok) say(q.message, ""); }; note.append(a);
+        } else if (v === "special:never") note.textContent = s.outlook.toLowerCase().startsWith("office@") ? "the account the shared mailboxes open through" : "";
+        else if (v.startsWith("company:") && !act.checked) { note.textContent = "⚠ switched OFF - not read"; note.style.color = "#8a4b00"; return; }
+        else if (v.startsWith("company:")) note.textContent = s.why === "already set" && v === "company:" + s.company ? "✓ connected" : (s.company && v === "company:" + s.company ? "suggested: " + s.why : "");
+        else note.textContent = "";
+      };
+      const showAct = () => { act.hidden = !sel.value.startsWith("company:"); };
+      label(); showAct(); sel.onchange = () => { paint(sel); label(); showAct(); }; act.onchange = () => label();
+      rows.push([s, sel, act]);
+    }
+    $("mbTable").append(t);
+    const hint = document.createElement("div"); hint.className = "hint";
+    hint.textContent = "Every mailbox gets a choice - nothing is left blank. Only one mailbox can be Fuel invoices, one Fleet Card statements and one Security reports.";
+    $("mbTable").append(hint);
+    const save = document.createElement("button"); save.className = "btn primary"; save.textContent = "Save these"; save.style.marginTop = "12px";
+    save.onclick = async () => {
+      const count = {};
+      for (const [, sel] of rows) if (sel.value.startsWith("special:") && sel.value !== "special:never" && sel.value !== READ_ALL) count[sel.value] = (count[sel.value] || 0) + 1;
+      const twice = Object.entries(count).filter(([, n]) => n > 1).map(([k]) => SPECIAL[k.slice(8)]);
+      if (twice.length) { say("Only one mailbox can be " + twice.join(" / ") + ". Change one of them, then save.", ""); return; }
+      const newNever = rows.filter(([s, sel]) => sel.value === "special:never" && (s.company || (s.special && s.special !== "never" && s.special !== "on hold")));
+      if (newNever.length && !confirm("These mailboxes will NOT be read any more: " + newNever.map(([s]) => s.outlook).join(", ") + ". Continue?")) return;
+      const off = rows.filter(([, sel, act]) => sel.value.startsWith("company:") && !act.checked).map(([, sel]) => sel.value.slice(8));
+      if (off.length > 1 && !confirm("These companies will NOT be read by any run until you tick them again:\n\n" + off.join("\n") + "\n\nContinue?")) return;
+      const items = rows.map(([s, sel, act]) => sel.value === "test" ? { outlook: s.outlook, action: "test" }
+        : sel.value.startsWith("special:") ? { outlook: s.outlook, action: "special", role: sel.value.slice(8) }
+        : { outlook: s.outlook, action: "company", company: sel.value.slice(8), active: act.checked });
+      const res = await api("/api/mailboxes/save", { items }); say(res.ok ? res.messages.join("   |   ") : res.message, res.ok ? "ok" : ""); refresh();
+    };
+    $("mbTable").append(save);
+  };
+
+  // ---------------------------------------------------------------- setup: destination, schedule
+  $("bLive").onclick = async () => {
+    if (!confirm("Switch to LIVE?\n\nDocuments will be written into the real folder you typed. Have you finished the rehearsal runs?")) return;
+    const r = await api("/api/destination", { mode: "live", root: $("destRoot").value, layout: $("destLayout").value }); $("destMsg").textContent = r.message; say(r.ok ? r.message : r.message, r.ok ? "ok" : ""); refresh();
+  };
+  $("destLayout").onchange = () => { layoutTouched = true; };
+  $("bMatch").onclick = () => start("match");
+  $("bTick").onclick = () => start("outlooktest");
+  $("bTest").onclick = async () => { const r = await api("/api/destination", { mode: "test", layout: $("destLayout").value }); $("destMsg").textContent = r.message; say(r.message, r.ok ? "ok" : ""); refresh(); };
+  $("bSchOn").onclick = async () => { const r = await api("/api/schedule", { enable: true, minutes: Number($("schMin").value) }); say(r.message, r.ok ? "ok" : ""); refresh(); };
+  $("bAllOn").onclick = async () => { if (!confirm("Switch every company on again?")) return; const r = await api("/api/companies/activate_all", {}); say(r.message, r.ok ? "ok" : ""); refresh(); };
+  $("bSecRun").onclick = () => { if (confirm("Run the security check now? It reads the Security mailbox, ticks the reports it uses and fills the STORE OPEN & CLOSE Excel.")) start("security"); };
+  $("bSecShadow").onclick = () => start("security_shadow");
+  $("bSecDates").onclick = () => { $("secDatesBox").hidden = !$("secDatesBox").hidden; };
+  $("bSecDatesGo").onclick = () => { const shadow = $("sShadow").checked; if (shadow || confirm("Read the security reports of this period for real?")) start("security_dates", { from: $("sFrom").value, to: $("sTo").value, shadow }); };
+  $("bSecOn").onclick = async () => { const r = await api("/api/security/schedule", { enable: true, day: $("secDay").value, time: $("secTime").value }); say(r.message, r.ok ? "ok" : ""); refresh(); };
+  $("bSecOff").onclick = async () => { const r = await api("/api/security/schedule", { enable: false }); say(r.message, r.ok ? "ok" : ""); refresh(); };
+  $("bSchOff").onclick = async () => { const r = await api("/api/schedule", { enable: false }); say(r.message, r.ok ? "ok" : ""); refresh(); };
+
+  // start: attach to a run in progress, then keep the overview fresh
+  const today = new Date().toISOString().slice(0, 10); $("dFrom").value = today; $("dTo").value = today; $("sFrom").value = today; $("sTo").value = today;
+  refresh(); setInterval(() => { if (!polling) refresh(); }, 8000);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+# Only needed to regenerate the test documents (tests/make_data.py) and to run benchmark.py
+-r requirements.txt
+reportlab>=4.0
